@@ -1,5 +1,7 @@
+import {beadLayout,waterDistance} from './condensation-layout.js';
 const canvas=document.getElementById('world');
 const sceneConfig=JSON.parse(document.getElementById('scene-config')?.textContent||'{}');
+const condensation=sceneConfig.condensation===true;
 const dropAspect=sceneConfig.dropAspect??1.08;
 const dropRadius=()=>Math.min(width*(sceneConfig.dropWidthFraction??.265),sceneConfig.maxRadius??108);
 const outsidePhase=sceneConfig.outsidePhase||'rain',insidePhase=sceneConfig.insidePhase||'home';
@@ -13,11 +15,12 @@ let touch=[...base],press=0,pressV=0,pressTarget=0;
 let open=0,openTarget=0,transitionStart=0,transitionFrom=0;
 let down=null,lastTap=null,tapTimer=0,raf=0,last=0,lastDraw=0,disposed=false,lost=false;
 let program,buffer,textures=[],uniforms={},images,wordCanvas,shaderText,ready=false;
+let beads=beadLayout(innerWidth,innerHeight);
 let entered=false,moveDistance=0,lastToggle=0;
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const loadImage=src=>new Promise((resolve,reject)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});
 function dimensions(){
-  width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);
+  width=innerWidth;height=innerHeight;beads=beadLayout(width,height);dpr=Math.min(devicePixelRatio||1,1.5);
   canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
   const moved=[(center[0]-(base?.[0]||width*.5))/width,(center[1]-(base?.[1]||height*.51))/height];
   base=[width*.5,height*.51];home=[...base];
@@ -57,7 +60,7 @@ function initialize(){
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);upload(t,image,i);return t;
   });
-  for(const name of ['cold','warm','words','screen','image','center','half','touch','velocity','pressure','open','time','rain','grade','roundness','strength','dispersion'])uniforms[name]=gl.getUniformLocation(program,'u_'+name);
+  for(const name of ['cold','warm','words','screen','image','center','half','touch','velocity','pressure','open','time','rain','grade','roundness','strength','dispersion','drops[0]'])uniforms[name]=gl.getUniformLocation(program,'u_'+name);
   ['cold','warm','words'].forEach((name,i)=>gl.uniform1i(uniforms[name],i));
   gl.uniform1f(uniforms.rain,sceneConfig.rain===false?0:1);
   gl.uniform3f(uniforms.grade,...(sceneConfig.grade||[.69,.83,.96]));
@@ -79,6 +82,7 @@ function draw(t){
   gl.uniform2f(uniforms.screen,width,height);gl.uniform2f(uniforms.image,images[0].width,images[0].height);
   gl.uniform2f(uniforms.center,...g.center);gl.uniform2f(uniforms.half,...g.half);gl.uniform2f(uniforms.touch,...touch);
   gl.uniform2f(uniforms.velocity,...velocity);gl.uniform1f(uniforms.pressure,press);gl.uniform1f(uniforms.open,open);
+  if(condensation)gl.uniform4fv(uniforms['drops[0]'],new Float32Array(beads.flat()));
   gl.uniform1f(uniforms.time,reduce.matches?0:t*.001);gl.drawArrays(gl.TRIANGLES,0,6);
 }
 function wake(){if(!disposed&&!document.hidden&&!raf)raf=requestAnimationFrame(frame);}
@@ -166,8 +170,10 @@ function fallback(){
 function drawFallback(g){
   const c=canvas.getContext('2d');if(!c)return;c.setTransform(dpr,0,0,dpr,0,0);
   const image=(im)=>{const scale=Math.max(width/im.width,height/im.height),w=im.width*scale,h=im.height*scale;c.drawImage(im,(width-w)/2,(height-h)/2,w,h);};
+  if(open>.99){image(images[1]);c.drawImage(wordCanvas,0,0,width,height);return;}
   image(images[0]);c.save();
-  c.beginPath();c.roundRect(g.center[0]-g.half[0],g.center[1]-g.half[1],g.half[0]*2,g.half[1]*2,Math.min(...g.half)*(sceneConfig.roundness??.77));c.clip();
+  c.beginPath();if(condensation&&open<.95)for(const [x,y,r,aspect] of beads){c.moveTo(x+r,y);c.ellipse(x,y,r,r*aspect,0,0,Math.PI*2);}
+  c.roundRect(g.center[0]-g.half[0],g.center[1]-g.half[1],g.half[0]*2,g.half[1]*2,Math.min(...g.half)*(sceneConfig.roundness??.77));c.clip();
   image(images[1]);c.drawImage(wordCanvas,0,0,width,height);c.restore();
 }
 async function start(){
@@ -178,4 +184,4 @@ async function start(){
 }
 start();
 // Read-only QA state, no controls or debug text are displayed in the experience.
-Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect}),project:(x,y)=>({x:x/width,y:y/height})}});
+Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect,condensation,beads:condensation?beads.map(b=>[...b]):[]}),distance:(x,y)=>waterDistance(x,y,center,dropRadius(),beads),project:(x,y)=>({x:x/width,y:y/height})}});

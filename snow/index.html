@@ -6,18 +6,18 @@
 <meta name="theme-color" content="#071522">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>一滴夏天</title>
+<title>凝水里的夏天</title>
 <link rel="icon" href="data:,">
-<link rel="preload" href="../assets/snow/forest-winter.webp" as="image">
-<link rel="preload" href="../assets/snow/forest-summer.webp" as="image">
-<link rel="stylesheet" href="../style.css?v=forest-2">
-<style>body{background-image:url("../assets/snow/forest-winter.webp")}</style>
+<link rel="preload" href="../assets/snow/road-winter.webp" as="image">
+<link rel="preload" href="../assets/snow/road-summer.webp" as="image">
+<link rel="stylesheet" href="../style.css?v=condensation-1">
+<style>body{background-image:url("../assets/snow/road-winter.webp")}</style>
 </head>
 <body>
-<main aria-label="一滴夏天">
+<main aria-label="凝水里的夏天">
 <canvas id="world" role="button" tabindex="0" aria-label="拖动小水滴照见夏季，按住形变，松开回弹；双击展开夏季"></canvas>
 </main>
-<script id="scene-config" type="application/json">{"outside":"../assets/snow/forest-winter.webp","inside":"../assets/snow/forest-summer.webp","shader":"../glass.frag?v=forest-2","hiddenText":false,"rain":false,"grade":[1,1,1],"roundness":1,"dropWidthFraction":0.16,"maxRadius":64,"dropAspect":1,"strength":0.72,"dispersion":0.28,"outsidePhase":"snowNight","insidePhase":"summer","insideLabel":"夏季已展开，双击回到冬季","outsideLabel":"拖动小水滴照见夏季，按住形变，松开回弹；双击展开夏季"}</script>
-<script type="module" src="../glass.js?v=forest-2"></script>
+<script id="scene-config" type="application/json">{"outside":"../assets/snow/road-winter.webp","inside":"../assets/snow/road-summer.webp","shader":"../condensation.frag?v=condensation-1","hiddenText":false,"rain":false,"grade":[1,1,1],"roundness":1,"condensation":true,"dropWidthFraction":0.115,"maxRadius":48,"dropAspect":1,"strength":0.9,"dispersion":0.2,"outsidePhase":"snowNight","insidePhase":"summer","insideLabel":"夏季已展开，双击回到冬季","outsideLabel":"拖动小水滴照见夏季，按住形变，松开回弹；双击展开夏季"}</script>
+<script type="module" src="../glass.js?v=condensation-1"></script>
 </body>
 </html>
