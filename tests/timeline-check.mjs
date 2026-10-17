@@ -4,15 +4,15 @@ import {createRequire} from 'node:module';
 const sharp=createRequire(import.meta.url)('/opt/codex/cua_node/lib/node_modules/sharp');
 const base=process.env.PREVIEW_URL||'http://localhost:4190/';
 const browser=await chromium.launch({proxy:base.startsWith('https:')&&process.env.HTTPS_PROXY?{server:process.env.HTTPS_PROXY}:undefined,executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader',...(process.env.SESSION_CA_SPKI_PIN?['--ignore-certificate-errors-spki-list='+process.env.SESSION_CA_SPKI_PIN]:[])]});
-async function visit(page){
+async function visit(page,errors=[]){
  await page.goto(base+'timeline/index.html');
- if((await page.title()).includes('External Content Notice'))await page.getByRole('button',{name:'Open the page',exact:true}).click();
+ if((await page.title()).includes('External Content Notice')){await page.getByRole('button',{name:'Open the page',exact:true}).click();errors.length=0;}
  await page.waitForFunction(()=>window.windowSpike?.state().renderer==='webgl');
 }
 try{
  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await visit(page);
+ await visit(page,errors);
  assert.equal(await page.locator('body').innerText(),'');
  const start=await page.evaluate(()=>window.windowSpike.state()),[hx,hy]=start.center;
  assert(start.radius>=40&&start.radius<=48);assert.equal(start.aspect,1);
