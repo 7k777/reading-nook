@@ -4,10 +4,12 @@ const dropAspect=sceneConfig.dropAspect??1.08;
 const dropRadius=()=>Math.min(width*(sceneConfig.dropWidthFraction??.265),sceneConfig.maxRadius??108);
 const outsidePhase=sceneConfig.outsidePhase||'rain',insidePhase=sceneConfig.insidePhase||'home';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
-const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,powerPreference:'low-power'});
+const gl=canvas.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,powerPreference:'low-power'});
+const maxSurface=gl?Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),gl.getParameter(gl.MAX_TEXTURE_SIZE)):8192;
+const renderRatio=()=>Math.min(devicePixelRatio||1,3,maxSurface/Math.max(innerWidth,innerHeight));
 const abort=new AbortController(),signal=abort.signal;
 const on=(target,event,handler,options={})=>target.addEventListener(event,handler,{...options,signal});
-let width=innerWidth,height=innerHeight,dpr=Math.min(devicePixelRatio||1,1.5);
+let width=innerWidth,height=innerHeight,dpr=renderRatio();
 let base=[width*.46,height*.76],home=[...base],target=[...base],center=[...base],velocity=[0,0];
 let touch=[...base],press=0,pressV=0,pressTarget=0;
 let open=0,openTarget=0,transitionStart=0,transitionFrom=0;
@@ -30,7 +32,7 @@ const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 const loadImage=src=>new Promise((resolve,reject)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});
 function dimensions(){
   const oldWidth=width,oldHeight=height;
-  width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);
+  width=innerWidth;height=innerHeight;dpr=renderRatio();
   canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
   const moved=[(center[0]-(base?.[0]||width*.46))/width,(center[1]-(base?.[1]||height*.76))/height];
   base=photoPoint(.46,.76);home=[...base];
@@ -232,4 +234,4 @@ async function start(){
 }
 start();
 // Read-only QA state, no controls or debug text are displayed in the experience.
-Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect,squeeze,pulse,stage,found:[...found],secrets:secrets.map(s=>({...s,screen:photoPoint(...s.uv)})),geometry:geometry()}),project:(x,y)=>({x:x/width,y:y/height})}});
+Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect,squeeze,pulse,stage,pixelRatio:dpr,surface:[canvas.width,canvas.height],found:[...found],secrets:secrets.map(s=>({...s,screen:photoPoint(...s.uv)})),geometry:geometry()}),project:(x,y)=>({x:x/width,y:y/height})}});

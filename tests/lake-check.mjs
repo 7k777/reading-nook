@@ -16,6 +16,8 @@ try{
  assert.equal(await page.locator('body').innerText(),'');
  const start=await page.evaluate(()=>window.windowSpike.state()),[hx,hy]=start.center;
  assert(start.radius>=40&&start.radius<=48);assert.equal(start.aspect,1);
+ assert.equal(start.pixelRatio,2);assert.deepEqual(start.surface,[780,1688]);
+ assert.equal(await page.evaluate(()=>document.querySelector("#world").getContext("webgl").getContextAttributes().alpha),true);
  const shot=await page.screenshot({path:'tests/lake-initial.png'});
  assert.equal(start.secrets.length,3);
  assert(start.secrets.every(s=>s.uv[1]>.55),'secrets live only in the reflection');
@@ -65,6 +67,10 @@ try{
  assert.equal((await page.evaluate(()=>window.windowSpike.state())).found.length,3,'discoveries survive refresh');
  console.log('PASS: original photo, three hidden reflection secrets, actual touch discoveries, rendered moon reveal, rebound, expansion, responsive, context recovery, local persistence, clean console');
  await context.close();
+ const retina=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3});
+ const retinaPage=await retina.newPage();await visit(retinaPage);
+ const rs=await retinaPage.evaluate(()=>window.windowSpike.state());assert.equal(rs.pixelRatio,3);assert.deepEqual(rs.surface,[1170,2532]);await retina.close();
+ console.log('PASS: native photo exterior, full 2x and 3x rendering');
  const reduced=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
  const rp=await reduced.newPage();await visit(rp);await rp.locator('#world').focus();await rp.keyboard.press('Enter');await rp.waitForFunction(()=>window.windowSpike.state().phase==='reflection');assert.equal(await rp.evaluate(()=>window.windowSpike.state().squeeze),0);await reduced.close();
  const fallback=await browser.newContext({viewport:{width:390,height:844}}),fp=await fallback.newPage();

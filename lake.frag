@@ -40,13 +40,13 @@ void main(){
   float rest=1.0-u_open;
   vec2 axes=u_half;
   Water w=bead(px,u_center,axes,u_time*.52,rest);
-  vec3 outside=cold(v_uv);
+  // The unmodified exterior is a native browser image beneath this transparent canvas.
   // A liquid front, not a geometric scale-up: travelling lobes settle as it expands.
   float angle=atan((px-u_center).y,(px-u_center).x);
   w.d+=(sin(angle*3.0-u_open*9.0)*7.0+sin(angle*5.0+u_open*6.0)*3.0)*sin(u_open*3.14159265);
 
   float shadow=exp(-max(w.d,0.0)/3.5)*.16*rest;
-  if(w.d>5.0){gl_FragColor=vec4(outside*(1.0-shadow),1.0);return;}
+  if(w.d>5.0){gl_FragColor=vec4(vec3(0.0),shadow);return;}
   vec2 normal=w.grad/max(length(w.grad),.0001);
   float depth=max(-w.d,0.0);
   float bevel=exp(-depth/max(2.0,w.r*.14));
@@ -70,6 +70,9 @@ void main(){
   float spec=exp(-dot(local-vec2(-.29,-.43),local-vec2(-.29,-.43))*105.0)*.11*rest;
   inside+=vec3(.80,.91,1.0)*(spec+u_discovery*.025*exp(-dot(local,local)*2.5));
   float mask=1.0-smoothstep(-.8,.75,w.d);
-  vec3 result=mix(outside*(1.0-shadow),inside,mask);
-  gl_FragColor=vec4(mix(result,warm(v_uv),smoothstep(.94,1.0,u_open)),1.0);
+  float expanded=smoothstep(.94,1.0,u_open);
+  float alpha=mix(mask+(1.0-mask)*shadow,1.0,expanded);
+  // Premultiplied output: optical pixels and their shadow alone cover the photo.
+  vec3 color=mix(inside*mask,warm(v_uv),expanded);
+  gl_FragColor=vec4(color,alpha);
 }
