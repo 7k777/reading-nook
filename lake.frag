@@ -88,14 +88,14 @@ void main(){
   float caustic=exp(-pow(abs((w.d-2.8)/1.25),2.0))*pow(lowerRight,9.0)*.025*rest;
   float outsideAlpha=shadow+caustic*(1.0-shadow);
   vec3 outsideColor=vec3(.64,.82,1.0)*caustic*(1.0-shadow);
-  float mask=1.0-smoothstep(-2.8,1.1,w.d);
+  float mask=1.0-smoothstep(-1.2,.7,w.d);
   float expanded=smoothstep(.94,1.0,u_open);
   float alpha=mix(mask+(1.0-mask)*outsideAlpha,1.0,expanded);
   // Premultiplied output: optical pixels and their shadow alone cover the photo.
   vec3 color=mix(inside*mask+outsideColor*(1.0-mask),warm(v_uv),expanded);
-  float rim=exp(-pow(abs((w.d+.2)/.82),2.0));
+  float rim=exp(-pow(abs((w.d+.15)/.65),2.0));
   float upperLeft=pow(max(dot(normal,normalize(vec2(-.62,-.78))),0.0),5.0);
-  float rimAlpha=rim*(.17+.48*upperLeft+.16*pow(lowerRight,4.0))*rest;
+  float rimAlpha=rim*(.23+.53*upperLeft+.18*pow(lowerRight,4.0))*rest;
   vec3 rimColor=mix(warm(v_uv)*.30,vec3(.95,.99,1.0),upperLeft);
   color=color*(1.0-rimAlpha)+rimColor*rimAlpha;
   alpha=alpha+rimAlpha*(1.0-alpha);

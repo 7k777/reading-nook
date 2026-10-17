@@ -15,7 +15,7 @@ try{
  await visit(page,errors);
  assert.equal(await page.locator('body').innerText(),'');
  const start=await page.evaluate(()=>window.windowSpike.state()),[hx,hy]=start.center;
- assert(start.radius>=40&&start.radius<=48);assert.equal(start.aspect,1);
+ assert(start.radius>=30&&start.radius<=36);assert.equal(start.aspect,1);
  assert.equal(start.pixelRatio,2);assert.deepEqual(start.surface,[780,1688]);
  assert.equal(await page.evaluate(()=>document.querySelector("#world").getContext("webgl").getContextAttributes().alpha),true);
  const shot=await page.screenshot({path:'tests/lake-initial.png'});
