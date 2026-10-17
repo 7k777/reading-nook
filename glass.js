@@ -13,7 +13,7 @@ let down=null,lastTap=null,tapTimer=0,raf=0,last=0,lastDraw=0,disposed=false,los
 let program,buffer,textures=[],uniforms={},images,wordCanvas,shaderText,ready=false;
 let entered=false,moveDistance=0,lastToggle=0;
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
-const loadImage=src=>new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});
+const loadImage=src=>new Promise((resolve,reject)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});
 function dimensions(){
   width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);
   canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
