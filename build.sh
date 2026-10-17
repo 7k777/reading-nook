@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eu
 mkdir -p public
-cp index.html glass.js glass.frag condensation.frag droplet.frag condensation-layout.js style.css public/
-cp -R assets daynight snow public/
+cp index.html glass.js glass.frag condensation.frag droplet.frag timeline.js timeline.frag condensation-layout.js style.css public/
+cp -R assets daynight snow timeline public/

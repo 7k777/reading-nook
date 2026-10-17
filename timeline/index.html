@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#111c27">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>另一条时间线</title>
+<link rel="icon" href="data:,">
+<link rel="preload" href="../assets/timeline/rain-room.webp" as="image" crossorigin="anonymous">
+<link rel="preload" href="../assets/timeline/summer-room.webp" as="image" crossorigin="anonymous">
+<link rel="stylesheet" href="../style.css?v=timeline-1">
+<style>body{background-image:url('../assets/timeline/rain-room.webp');background-color:#111c27}</style>
+</head><body>
+<main aria-label="另一条时间线"><canvas id="world" role="button" tabindex="0" aria-label="拖动水滴寻找花房，按住形变，松开回弹；双击揭开盛夏"></canvas></main>
+<script id="scene-config" type="application/json">{"outside":"../assets/timeline/rain-room.webp","inside":"../assets/timeline/summer-room.webp","shader":"../timeline.frag?v=timeline-1","hiddenText":false,"rain":false,"grade":[1,1,1],"roundness":1,"dropWidthFraction":0.115,"maxRadius":48,"dropAspect":1,"strength":0.87,"dispersion":0.16,"outsidePhase":"rainRoom","insidePhase":"summerRoom","insideLabel":"盛夏花房已展开，双击回到雨夜荒屋","outsideLabel":"拖动水滴寻找花房，按住形变，松开回弹；双击揭开盛夏"}</script>
+<script type="module" src="../timeline.js?v=timeline-1"></script>
+</body></html>
