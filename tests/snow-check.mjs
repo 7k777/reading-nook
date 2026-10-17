@@ -2,7 +2,7 @@ import {chromium} from '/opt/codex/cua_node/lib/node_modules/playwright/index.mj
 import assert from 'node:assert/strict';
 const base=process.env.PREVIEW_URL||'http://localhost:4174/';
 const browser=await chromium.launch({proxy:base.startsWith('https:')&&process.env.HTTPS_PROXY?{server:process.env.HTTPS_PROXY}:undefined,executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader',...(process.env.SESSION_CA_SPKI_PIN?['--ignore-certificate-errors-spki-list='+process.env.SESSION_CA_SPKI_PIN]:[])]});
-for(const [path,outer,inner] of [['snow/index.html','snowNight','snowDay']]){
+for(const [path,outer,inner] of [['snow/index.html','snowNight','summer']]){
  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
  const page=await context.newPage(),errors=[],bad=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)bad.push(r.url());});
