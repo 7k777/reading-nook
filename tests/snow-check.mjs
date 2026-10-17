@@ -1,2 +1,2 @@
-// Current snow route is the condensation experience.
-import './condensation-check.mjs';
+// Current snow route keeps just the main waterdrop.
+import './single-drop-check.mjs';
