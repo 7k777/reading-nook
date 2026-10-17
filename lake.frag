@@ -15,8 +15,9 @@ Water bead(vec2 pixel,vec2 anchor,vec2 axes,float phase,float moving){
   // narrows into a soft tail; it is not the silhouette of a floating sphere.
   float r0=min(axes.x,axes.y);
   float sag=clamp(p.y/max(axes.y,1.0),-1.0,1.0);
-  p.x/=1.0+.075*sag*moving;
-  p.y/=1.0+.055*moving;
+  p.x/=1.0+.30*sag*moving;
+  p.x-=axes.x*.025*sag*sag*moving;
+  p.y/=1.0+.12*moving;
   vec2 side=vec2(-direction.y,direction.x);
   float trailing=clamp(-dot(p,direction)/max(r0,1.0),0.0,1.0);
   p+=side*dot(p,side)*trailing*clamp(length(u_velocity)/650.0,0.0,1.0)*.30*moving;
@@ -61,35 +62,39 @@ void main(){
   float depth=max(-w.d,0.0);
   vec2 local=w.local;
   float rho=min(length(local),.999);
-  // Spherical-cap height field: press lowers the dome, while the footprint spreads.
-  float capHeight=.47*(1.0-u_pressure*.34)*(1.0-u_open*.80);
-  float sphereRadius=(1.0+capHeight*capHeight)/(2.0*capHeight);
-  float z=sqrt(max(sphereRadius*sphereRadius-rho*rho,.0001));
-  float thickness=max(z+capHeight-sphereRadius,0.0)*w.r;
-  vec3 N=normalize(vec3(local/sphereRadius,z/sphereRadius));
-  N=normalize(N+vec3(-u_velocity*.00010,0.0)*rest);
+  // A wetted aspherical cap: broad contact footprint, low centre and a curved
+  // meniscus. Analytic derivatives produce the 3-D normal; no sphere is rendered.
+  float support=max(1.0-dot(local,local),.001);
+  float height=.30*(1.0-u_pressure*.32)*(1.0-u_open*.80);
+  float exponent=.65;
+  float gravity=1.0+.20*local.y;
+  float profile=pow(support,exponent);
+  float thickness=height*w.r*profile*gravity;
+  vec2 dh=-2.0*height*w.r*exponent*pow(support,exponent-1.0)*local*gravity;
+  dh.y+=height*w.r*profile*.20;
+  vec3 N=normalize(vec3(-dh/axes,1.0));
+  N=normalize(N+vec3(-u_velocity*.00006,0.0)*rest);
   // Snell refraction through water, n=1.333. The virtual image plane behind the
   // glass lets the curved cap continuously magnify the whole underlying surface.
   vec3 ray=refract(vec3(0.0,0.0,-1.0),N,1.0/1.333);
-  float opticalDistance=thickness+w.r*.92*rest;
+  float opticalDistance=thickness+w.r*.65*rest;
   vec2 offset=ray.xy/max(-ray.z,.15)*opticalDistance*u_strength*rest*rest;
   offset+=vec2(sin(px.y*.023+u_time*.45),cos(px.x*.019-u_time*.37))*.20*rest;
-  offset*=mix(.10,1.0,smoothstep(0.0,8.5,depth));
+  offset*=mix(.10,1.0,smoothstep(0.0,4.5,depth));
   vec2 uv=v_uv+offset/u_screen;
   float edge=exp(-depth/max(1.3,w.r*.075));
   vec2 fringe=normal*edge*u_dispersion*rest/u_screen;
   vec3 inside=vec3(warm(uv+fringe).r,warm(uv).g,warm(uv-fringe).b);
   vec3 reflected=reflect(vec3(0.0,0.0,-1.0),N);
-  float fresnel=.0204+.9796*pow(1.0-max(N.z,0.0),5.0);
-  // An elongated soft window reflects as a curved streak on the cap. A tighter
-  // glint rides the same 3-D normal and moves when pressure or velocity changes.
-  float softbox=exp(-pow(abs((reflected.x+.46)/.22),4.0)-pow(abs((reflected.y+.48)/.49),4.0))*smoothstep(.10,.42,reflected.z);
+  // Two localized light cues on the curved meniscus leave the centre clear.
+  // Broad white environment tint made earlier iterations read as an air bubble.
   vec3 light=normalize(vec3(-.48,-.62,.68));
-  float glint=pow(max(dot(reflected,light),0.0),155.0);
+  float glint=pow(max(dot(reflected,light),0.0),140.0);
+  float pinLight=pow(max(dot(reflected,normalize(vec3(.40,-.55,.75))),0.0),220.0);
+  float streak=exp(-pow(abs((reflected.x+.43)/.12),2.0)-pow(abs((reflected.y+.60)/.30),2.0))*smoothstep(.05,.35,reflected.z);
   float lowerRight=max(dot(normal,normalize(vec2(.46,.89))),0.0);
-  inside*=1.0-edge*pow(lowerRight,4.0)*.035*rest;
-  float reflection=clamp(fresnel*.25+softbox*.13+glint*.64,0.0,.88)*rest;
-  inside=mix(inside,vec3(.94,.98,1.0),reflection);
+  inside*=1.0-edge*pow(lowerRight,5.0)*.045*rest;
+  inside=mix(inside,vec3(.97,.99,1.0),clamp(glint*.78+streak*.22+pinLight*.34,0.0,.88)*rest);
   // A thin directional contact line keeps the droplet findable without a white ring.
   inside+=vec3(.74,.88,1.0)*u_discovery*.025*exp(-dot(local,local)*2.5);
   float caustic=exp(-pow(abs((w.d-2.8)/1.25),2.0))*pow(lowerRight,9.0)*.025*rest;
@@ -102,8 +107,8 @@ void main(){
   vec3 color=mix(inside*mask+outsideColor*(1.0-mask),warm(v_uv),expanded);
   float rim=exp(-pow(abs((w.d+.2)/.82),2.0));
   float upperLeft=pow(max(dot(normal,normalize(vec2(-.62,-.78))),0.0),5.0);
-  float rimAlpha=rim*(.13+.44*upperLeft+.12*pow(lowerRight,4.0))*rest;
-  vec3 rimColor=mix(vec3(.25,.36,.47),vec3(.92,.98,1.0),upperLeft);
+  float rimAlpha=rim*(.17+.48*upperLeft+.16*pow(lowerRight,4.0))*rest;
+  vec3 rimColor=mix(warm(v_uv)*.30,vec3(.95,.99,1.0),upperLeft);
   color=color*(1.0-rimAlpha)+rimColor*rimAlpha;
   alpha=alpha+rimAlpha*(1.0-alpha);
   gl_FragColor=vec4(color,alpha);

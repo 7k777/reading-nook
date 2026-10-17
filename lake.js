@@ -51,7 +51,7 @@ function makeWords(){
   // Stationary screen-space layer follows the same cover transform as the photograph.
   // It is sampled exclusively inside the lens, including the same optical displacement.
   c.textAlign='center';c.textBaseline='middle';c.shadowColor='rgba(3,12,22,.9)';c.shadowBlur=5;
-  c.font='400 '+Math.min(16,width*.042)+'px "Songti SC", "Noto Serif CJK SC", serif';
+  c.font='400 '+Math.min(13,width*.034)+'px "Songti SC", "Noto Serif CJK SC", serif';
   c.fillStyle='rgba(231,239,245,.96)';
   const letter=photoPoint(...secrets[0].uv);c.fillText('你看，山也在水里做梦。',...letter);
   const [mx,my]=photoPoint(...secrets[1].uv);
