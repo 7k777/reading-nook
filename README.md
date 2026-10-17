@@ -23,7 +23,7 @@
 
 ## 部署
 
-GitHub Pages 从 main 分支根目录发布；.nojekyll 保证静态资源原样提供。所有路径相对引用，支持项目子路径。
+GitHub Pages 从独立的 waterdrop-preview 分支根目录发布（不修改仓库 main 分支）；.nojekyll 保证静态资源原样提供。所有路径相对引用，支持项目子路径。
 
 ## 验证
 
