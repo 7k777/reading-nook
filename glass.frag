@@ -15,6 +15,8 @@ uniform float u_time;
 uniform float u_rain;
 uniform vec3 u_grade;
 uniform float u_roundness;
+uniform float u_strength;
+uniform float u_dispersion;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float sdf(vec2 p){
   vec2 axis=u_velocity/max(length(u_velocity),1.0);
@@ -74,9 +76,9 @@ void main(){
   vec2 touchDelta=p-(u_touch-u_center);
   float touchInfluence=exp(-dot(touchDelta,touchDelta)/8000.0);
   vec2 pressing=touchDelta*u_pressure*.35*touchInfluence;
-  vec2 offset=(lens+wave+pressing-u_velocity*.012)*rest*rest;
+  vec2 offset=(lens+wave+pressing-u_velocity*.012)*rest*rest*u_strength;
   vec2 sampleUv=v_uv+offset/u_screen;
-  vec2 chroma=normal*bevel*.95/u_screen*rest;
+  vec2 chroma=normal*bevel*u_dispersion/u_screen*rest;
   vec3 inside=vec3(warmAt(sampleUv+chroma).r,warmAt(sampleUv).g,warmAt(sampleUv-chroma).b);
   // A separate, stationary text texture lives in the warm world. It is also refracted.
   vec4 words=texture2D(u_words,clamp(sampleUv,.001,.999));

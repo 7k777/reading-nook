@@ -23,10 +23,25 @@
 
 ## 部署
 
-GitHub Pages 从独立的 waterdrop-preview 分支根目录发布（不修改仓库 main 分支）；.nojekyll 保证静态资源原样提供。所有路径相对引用，支持项目子路径。
+源码在独立的 waterdrop-preview 分支，不修改仓库 main。运行 sh build.sh 将公开网页复制到 public/；静态托管只发布 public/。GitHub Pages 尚未启用；Render 可从该分支构建。所有路径相对引用，支持项目子路径。
 
 ## 验证
 
 tests/check.mjs 使用本环境已有 Playwright/Chromium；其他环境需调整导入和浏览器路径。
 
 已在 390×844 下验证加载、真实触控按压拖动与回弹、双击展开和返回、多个手机尺寸无溢出及控制台错误。iPhone 真机 GPU 帧率仍需实际复核。
+
+## 免登录预览
+
+已通过公开源码 CDN 发布固定版本：
+
+- 线稿显影：https://rawcdn.githack.com/7k777/reading-nook/0b3ba70744e0b9dbd7f39c98ff13bf2ae733b91d/index.html
+- 昼夜水滴：https://rawcdn.githack.com/7k777/reading-nook/0b3ba70744e0b9dbd7f39c98ff13bf2ae733b91d/daynight/index.html
+
+首次访问可能显示 Open the page 外链确认，无需账号。已在未登录 Chromium 中验证两个远程页面的完整触控交互。GitHub Pages 未开通，未创建 Render 服务。CDN 为预览用途，不提供生产可用性保证。
+
+## 蓝调雪地
+
+snow/index.html 是新生成的松林木屋雪地：外层蓝调雪夜，水滴内是同构图白昼。390×844 下水滴直径约 125px（原约 207px），静止为圆形，保留按压、拉扯、松手回弹与双击扩张。
+
+两张雪地图片为此次原创生成，未直接使用参考截图。雪地版降低了折射强度与色散，以保留更清透的雪色；旧版默认参数不变。

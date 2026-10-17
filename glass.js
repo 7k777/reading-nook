@@ -1,5 +1,7 @@
 const canvas=document.getElementById('world');
 const sceneConfig=JSON.parse(document.getElementById('scene-config')?.textContent||'{}');
+const dropAspect=sceneConfig.dropAspect??1.08;
+const dropRadius=()=>Math.min(width*(sceneConfig.dropWidthFraction??.265),sceneConfig.maxRadius??108);
 const outsidePhase=sceneConfig.outsidePhase||'rain',insidePhase=sceneConfig.insidePhase||'home';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
 const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,powerPreference:'low-power'});
@@ -55,17 +57,19 @@ function initialize(){
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);upload(t,image,i);return t;
   });
-  for(const name of ['cold','warm','words','screen','image','center','half','touch','velocity','pressure','open','time','rain','grade','roundness'])uniforms[name]=gl.getUniformLocation(program,'u_'+name);
+  for(const name of ['cold','warm','words','screen','image','center','half','touch','velocity','pressure','open','time','rain','grade','roundness','strength','dispersion'])uniforms[name]=gl.getUniformLocation(program,'u_'+name);
   ['cold','warm','words'].forEach((name,i)=>gl.uniform1i(uniforms[name],i));
   gl.uniform1f(uniforms.rain,sceneConfig.rain===false?0:1);
   gl.uniform3f(uniforms.grade,...(sceneConfig.grade||[.69,.83,.96]));
   gl.uniform1f(uniforms.roundness,sceneConfig.roundness??.77);
+  gl.uniform1f(uniforms.strength,sceneConfig.strength??1);
+  gl.uniform1f(uniforms.dispersion,sceneConfig.dispersion??.95);
   lost=false;ready=true;canvas.dataset.renderer='webgl';canvas.classList.add('ready');wake();
 }
 function geometry(){
   const e=open;
-  const min=Math.min(width*.265,108);
-  return {center:[center[0]*(1-e)+width*.5*e,center[1]*(1-e)+height*.5*e],half:[min*(1-e)+width*.68*e,min*1.08*(1-e)+height*.68*e]};
+  const min=dropRadius();
+  return {center:[center[0]*(1-e)+width*.5*e,center[1]*(1-e)+height*.5*e],half:[min*(1-e)+width*.68*e,min*dropAspect*(1-e)+height*.68*e]};
 }
 function draw(t){
   if(!ready||lost)return;
@@ -109,9 +113,9 @@ function toggle(){
 }
 function hit(x,y){
   if(open>.1)return true;
-  const half=Math.min(width*.265,108);
+  const half=dropRadius();
   const a=Math.abs(x-center[0]),b=Math.abs(y-center[1]);
-  const r=half*(sceneConfig.roundness??.77),qx=Math.max(a-half+r,0),qy=Math.max(b-half*1.08+r,0);
+  const r=half*(sceneConfig.roundness??.77),qx=Math.max(a-half+r,0),qy=Math.max(b-half*dropAspect+r,0);
   return Math.hypot(qx,qy)<=r+6;
 }
 on(canvas,'pointerdown',e=>{
@@ -174,4 +178,4 @@ async function start(){
 }
 start();
 // Read-only QA state, no controls or debug text are displayed in the experience.
-Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer}),project:(x,y)=>({x:x/width,y:y/height})}});
+Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect}),project:(x,y)=>({x:x/width,y:y/height})}});

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#071522">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>一滴白昼 · 雪地</title>
+<link rel="icon" href="data:,">
+<link rel="preload" href="../assets/snow/night.webp" as="image">
+<link rel="preload" href="../assets/snow/day.webp" as="image">
+<link rel="stylesheet" href="../style.css?v=snow-1">
+<style>body{background-image:url("../assets/snow/night.webp")}</style>
+</head>
+<body>
+<main aria-label="一滴白昼 · 雪地">
+<canvas id="world" role="button" tabindex="0" aria-label="拖动小水滴照见白昼雪地，按住形变，松开回弹；双击展开白昼"></canvas>
+</main>
+<script id="scene-config" type="application/json">{"outside":"../assets/snow/night.webp","inside":"../assets/snow/day.webp","shader":"../glass.frag?v=snow-1","hiddenText":false,"rain":false,"grade":[1,1,1],"roundness":1,"dropWidthFraction":0.16,"maxRadius":64,"dropAspect":1,"strength":0.72,"dispersion":0.28,"outsidePhase":"snowNight","insidePhase":"snowDay","insideLabel":"白昼雪地已展开，双击回到蓝调雪夜","outsideLabel":"拖动小水滴照见白昼雪地，按住形变，松开回弹；双击展开白昼"}</script>
+<script type="module" src="../glass.js?v=snow-1"></script>
+</body>
+</html>
