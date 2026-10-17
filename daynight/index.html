@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#071522">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>水滴里的白天</title>
+<link rel="icon" href="data:,">
+<link rel="preload" href="../assets/night.webp" as="image">
+<link rel="preload" href="../assets/day.webp" as="image">
+<link rel="stylesheet" href="../style.css?v=1">
+<style>body{background-image:url("../assets/night.webp")}</style>
+</head>
+<body>
+<main aria-label="水滴里的白天">
+<canvas id="world" role="button" tabindex="0" aria-label="拖动水滴照见白天，按住形变，松手回弹；双击让白天铺满屏幕，再双击回到夜晚"></canvas>
+</main>
+<script id="scene-config" type="application/json">{"outside":"../assets/night.webp","inside":"../assets/day.webp","shader":"../glass.frag?v=1","hiddenText":false,"rain":false,"grade":[1,1,1],"roundness":1,"outsidePhase":"night","insidePhase":"day","insideLabel":"白天已展开，双击回到夜晚","outsideLabel":"拖动水滴照见白天，按住形变，松手回弹；双击展开白天"}</script>
+<script type="module" src="../glass.js?v=1"></script>
+</body>
+</html>
