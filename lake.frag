@@ -11,6 +11,15 @@ Water bead(vec2 pixel,vec2 anchor,vec2 axes,float phase,float moving){
   vec2 direction=u_velocity/max(length(u_velocity),1.0);
   float stretch=clamp(length(u_velocity)/1800.0,0.0,.19)*moving;
   p-=direction*dot(p,direction)*stretch;
+  // A pinned contact footprint sags slightly under gravity. During drag its rear
+  // narrows into a soft tail; it is not the silhouette of a floating sphere.
+  float r0=min(axes.x,axes.y);
+  float sag=clamp(p.y/max(axes.y,1.0),-1.0,1.0);
+  p.x/=1.0+.075*sag*moving;
+  p.y/=1.0+.055*moving;
+  vec2 side=vec2(-direction.y,direction.x);
+  float trailing=clamp(-dot(p,direction)/max(r0,1.0),0.0,1.0);
+  p+=side*dot(p,side)*trailing*clamp(length(u_velocity)/650.0,0.0,1.0)*.30*moving;
   vec2 pressScale=vec2(1.0+u_pressure*.20*moving,1.0-u_pressure*.12*moving);
   vec2 q=p/(axes*pressScale);
   float l=max(length(q),.0001);
@@ -45,15 +54,15 @@ void main(){
 
   // A droplet has a raised cap, a contact shadow on the glass, and a small caustic.
   // Shadow is displaced down-right rather than painted as a dark outline.
-  Water shadowShape=bead(px-vec2(1.8,3.2)*rest,u_center,axes,u_time*.52,rest);
-  float shadow=exp(-pow(max(shadowShape.d,0.0)/6.5,2.0))*.045*rest;
+  Water shadowShape=bead(px-vec2(.35,.9)*rest,u_center,axes,u_time*.52,rest);
+  float shadow=exp(-pow(max(shadowShape.d,0.0)/6.5,2.0))*.032*rest;
   if(w.d>18.0){gl_FragColor=vec4(vec3(0.0),shadow);return;}
   vec2 normal=w.grad/max(length(w.grad),.0001);
   float depth=max(-w.d,0.0);
   vec2 local=w.local;
   float rho=min(length(local),.999);
   // Spherical-cap height field: press lowers the dome, while the footprint spreads.
-  float capHeight=.73*(1.0-u_pressure*.34)*(1.0-u_open*.80);
+  float capHeight=.47*(1.0-u_pressure*.34)*(1.0-u_open*.80);
   float sphereRadius=(1.0+capHeight*capHeight)/(2.0*capHeight);
   float z=sqrt(max(sphereRadius*sphereRadius-rho*rho,.0001));
   float thickness=max(z+capHeight-sphereRadius,0.0)*w.r;
@@ -62,7 +71,7 @@ void main(){
   // Snell refraction through water, n=1.333. The virtual image plane behind the
   // glass lets the curved cap continuously magnify the whole underlying surface.
   vec3 ray=refract(vec3(0.0,0.0,-1.0),N,1.0/1.333);
-  float opticalDistance=thickness+w.r*.78*rest;
+  float opticalDistance=thickness+w.r*.92*rest;
   vec2 offset=ray.xy/max(-ray.z,.15)*opticalDistance*u_strength*rest*rest;
   offset+=vec2(sin(px.y*.023+u_time*.45),cos(px.x*.019-u_time*.37))*.20*rest;
   offset*=mix(.10,1.0,smoothstep(0.0,8.5,depth));
@@ -76,15 +85,12 @@ void main(){
   // glint rides the same 3-D normal and moves when pressure or velocity changes.
   float softbox=exp(-pow((reflected.x+.46)/.22,4.0)-pow((reflected.y+.48)/.49,4.0))*smoothstep(.10,.42,reflected.z);
   vec3 light=normalize(vec3(-.48,-.62,.68));
-  float glint=pow(max(dot(reflected,light),0.0),100.0);
+  float glint=pow(max(dot(reflected,light),0.0),155.0);
   float lowerRight=max(dot(normal,normalize(vec2(.46,.89))),0.0);
-  inside*=1.0-edge*(.015+.035*lowerRight)*rest;
-  float reflection=clamp(fresnel*.55+softbox*.34+glint*.58,0.0,.88)*rest;
+  inside*=1.0-edge*pow(lowerRight,4.0)*.035*rest;
+  float reflection=clamp(fresnel*.25+softbox*.13+glint*.64,0.0,.88)*rest;
   inside=mix(inside,vec3(.94,.98,1.0),reflection);
-  // The far meniscus catches a narrow directional reflection, not a white ring.
-  float rim=exp(-pow((w.d+1.0)/.7,2.0));
-  float upperLeft=pow(max(dot(normal,normalize(vec2(-.62,-.78))),0.0),6.0);
-  inside=mix(inside,vec3(.90,.96,1.0),rim*upperLeft*.025*rest);
+  // No circumferential rim: depth comes from the cap and local reflections.
   inside+=vec3(.74,.88,1.0)*u_discovery*.025*exp(-dot(local,local)*2.5);
   float caustic=exp(-pow((w.d-2.8)/1.25,2.0))*pow(lowerRight,9.0)*.025*rest;
   float outsideAlpha=shadow+caustic*(1.0-shadow);
