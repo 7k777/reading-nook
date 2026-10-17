@@ -9,26 +9,16 @@ struct Water {float d;vec2 grad;vec2 anchor;vec2 local;float r;};
 Water bead(vec2 pixel,vec2 anchor,vec2 axes,float phase,float moving){
   vec2 p=pixel-anchor;
   vec2 direction=u_velocity/max(length(u_velocity),1.0);
-  float stretch=clamp(length(u_velocity)/1800.0,0.0,.19)*moving;
+  // Only positive linear deformation is allowed: the contact boundary remains
+  // an ellipse at rest, while pressed, and throughout a drag. No pointed tail.
+  float stretch=clamp(length(u_velocity)/2200.0,0.0,.08)*moving;
   p-=direction*dot(p,direction)*stretch;
-  // A pinned contact footprint sags slightly under gravity. During drag its rear
-  // narrows into a soft tail; it is not the silhouette of a floating sphere.
-  float r0=min(axes.x,axes.y);
-  float sag=clamp(p.y/max(axes.y,1.0),-1.0,1.0);
-  p.x/=1.0+.30*sag*moving;
-  p.x-=axes.x*.025*sag*sag*moving;
-  p.y/=1.0+.12*moving;
-  vec2 side=vec2(-direction.y,direction.x);
-  float trailing=clamp(-dot(p,direction)/max(r0,1.0),0.0,1.0);
-  p+=side*dot(p,side)*trailing*clamp(length(u_velocity)/650.0,0.0,1.0)*.30*moving;
-  vec2 pressScale=vec2(1.0+u_pressure*.20*moving,1.0-u_pressure*.12*moving);
+  vec2 pressScale=vec2(1.0+u_pressure*.12*moving,1.0-u_pressure*.07*moving);
   vec2 q=p/(axes*pressScale);
   float l=max(length(q),.0001);
   float r=min(axes.x,axes.y);
-  vec2 unit=q/l;
-  float edge=(unit.x*unit.y*.4+unit.x*(unit.x*unit.x-.5)*.5)*smoothstep(4.0,18.0,r);
   Water w;
-  w.d=(l-1.0)*r+edge;
+  w.d=(l-1.0)*r;
   vec2 gradient=q/(axes*pressScale);
   w.grad=gradient/max(length(gradient),.00001);
   w.anchor=anchor;w.local=q;w.r=r;
@@ -49,9 +39,7 @@ void main(){
   vec2 axes=u_half;
   Water w=bead(px,u_center,axes,u_time*.52,rest);
   // The unmodified exterior is a native browser image beneath this transparent canvas.
-  // A liquid front, not a geometric scale-up: travelling lobes settle as it expands.
-  float angle=atan((px-u_center).y,(px-u_center).x);
-  w.d+=(sin(angle*3.0-u_open*9.0)*7.0+sin(angle*5.0+u_open*6.0)*3.0)*sin(u_open*3.14159265);
+  // Expansion keeps a smooth convex contour; surface optics carry the motion.
 
   // A droplet has a raised cap, a contact shadow on the glass, and a small caustic.
   // Shadow is displaced down-right rather than painted as a dark outline.
