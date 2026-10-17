@@ -1,7 +1,8 @@
 precision highp float;
 varying vec2 v_uv;
 uniform sampler2D u_cold,u_warm,u_words;
-uniform vec2 u_screen,u_image,u_center,u_half,u_touch,u_velocity,u_focus;
+uniform vec2 u_screen,u_image,u_center,u_half,u_touch,u_velocity;
+uniform vec4 u_frame;
 uniform float u_pressure,u_open,u_time,u_strength,u_dispersion,u_pulse,u_discovery;
 uniform vec3 u_grade;
 struct Water {float d;vec2 grad;vec2 anchor;vec2 local;float r;};
@@ -23,14 +24,11 @@ Water bead(vec2 pixel,vec2 anchor,vec2 axes,float phase,float moving){
   w.anchor=anchor;w.local=q;w.r=r;
   return w;
 }
-vec2 cover(vec2 uv){
-  float a=u_screen.x/u_screen.y,b=u_image.x/u_image.y;
-  vec2 s=a>b?vec2(1.0,b/a):vec2(a/b,1.0);
-  return clamp((uv-.5)*s+u_focus,.001,.999);
-}
-vec3 cold(vec2 uv){return texture2D(u_cold,cover(uv)).rgb*u_grade;}
+vec2 photoUv(vec2 uv){return (uv-u_frame.xy)/u_frame.zw;}
 vec3 warm(vec2 uv){
- vec3 photo=texture2D(u_warm,cover(uv)).rgb;
+ vec2 p=photoUv(uv);
+ if(p.x<0.0||p.y<0.0||p.x>1.0||p.y>1.0)return vec3(.090196,.137255,.20);
+ vec3 photo=texture2D(u_warm,p).rgb;
  vec4 secret=texture2D(u_words,clamp(uv,.001,.999));
  return mix(photo,secret.rgb,secret.a);
 }
@@ -47,8 +45,8 @@ void main(){
 
   // A droplet has a raised cap, a contact shadow on the glass, and a small caustic.
   // Shadow is displaced down-right rather than painted as a dark outline.
-  Water shadowShape=bead(px-vec2(3.8,6.0)*rest,u_center,axes,u_time*.52,rest);
-  float shadow=exp(-pow(max(shadowShape.d,0.0)/4.5,2.0))*.31*rest;
+  Water shadowShape=bead(px-vec2(1.8,3.2)*rest,u_center,axes,u_time*.52,rest);
+  float shadow=exp(-pow(max(shadowShape.d,0.0)/6.5,2.0))*.045*rest;
   if(w.d>18.0){gl_FragColor=vec4(vec3(0.0),shadow);return;}
   vec2 normal=w.grad/max(length(w.grad),.0001);
   float depth=max(-w.d,0.0);
@@ -67,6 +65,7 @@ void main(){
   float opticalDistance=thickness+w.r*.78*rest;
   vec2 offset=ray.xy/max(-ray.z,.15)*opticalDistance*u_strength*rest*rest;
   offset+=vec2(sin(px.y*.023+u_time*.45),cos(px.x*.019-u_time*.37))*.20*rest;
+  offset*=mix(.10,1.0,smoothstep(0.0,8.5,depth));
   vec2 uv=v_uv+offset/u_screen;
   float edge=exp(-depth/max(1.3,w.r*.075));
   vec2 fringe=normal*edge*u_dispersion*rest/u_screen;
@@ -79,18 +78,18 @@ void main(){
   vec3 light=normalize(vec3(-.48,-.62,.68));
   float glint=pow(max(dot(reflected,light),0.0),100.0);
   float lowerRight=max(dot(normal,normalize(vec2(.46,.89))),0.0);
-  inside*=1.0-edge*(.10+.24*lowerRight)*rest;
-  float reflection=clamp(fresnel*.92+softbox*.34+glint*.58,0.0,.88)*rest;
+  inside*=1.0-edge*(.015+.035*lowerRight)*rest;
+  float reflection=clamp(fresnel*.55+softbox*.34+glint*.58,0.0,.88)*rest;
   inside=mix(inside,vec3(.94,.98,1.0),reflection);
   // The far meniscus catches a narrow directional reflection, not a white ring.
   float rim=exp(-pow((w.d+1.0)/.7,2.0));
   float upperLeft=pow(max(dot(normal,normalize(vec2(-.62,-.78))),0.0),6.0);
-  inside=mix(inside,vec3(.90,.96,1.0),rim*upperLeft*.55*rest);
+  inside=mix(inside,vec3(.90,.96,1.0),rim*upperLeft*.025*rest);
   inside+=vec3(.74,.88,1.0)*u_discovery*.025*exp(-dot(local,local)*2.5);
-  float caustic=exp(-pow((w.d-2.8)/1.25,2.0))*pow(lowerRight,9.0)*.19*rest;
+  float caustic=exp(-pow((w.d-2.8)/1.25,2.0))*pow(lowerRight,9.0)*.025*rest;
   float outsideAlpha=shadow+caustic*(1.0-shadow);
   vec3 outsideColor=vec3(.64,.82,1.0)*caustic*(1.0-shadow);
-  float mask=1.0-smoothstep(-.8,.75,w.d);
+  float mask=1.0-smoothstep(-6.5,1.5,w.d);
   float expanded=smoothstep(.94,1.0,u_open);
   float alpha=mix(mask+(1.0-mask)*outsideAlpha,1.0,expanded);
   // Premultiplied output: optical pixels and their shadow alone cover the photo.

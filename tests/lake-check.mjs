@@ -20,6 +20,8 @@ try{
  assert.equal(await page.evaluate(()=>document.querySelector("#world").getContext("webgl").getContextAttributes().alpha),true);
  const shot=await page.screenshot({path:'tests/lake-initial.png'});
  assert.equal(start.secrets.length,3);
+ assert.deepEqual(start.frame.size,[390,520]);assert.deepEqual(start.frame.offset,[0,162]);
+ assert.equal(await page.evaluate(()=>getComputedStyle(document.body).backgroundSize),'contain');
  assert(start.secrets.every(s=>s.uv[1]>.55),'secrets live only in the reflection');
  // Baseline pixels let us verify that a hidden moon appears only under the lens.
  const sample=async(buffer,x,y)=>{const {data,info}=await sharp(buffer).removeAlpha().raw().toBuffer({resolveWithObject:true});let peak=0;for(let dy=-20;dy<=20;dy++)for(let dx=-20;dx<=20;dx++){const i=(Math.round((y+dy)*2)*info.width+Math.round((x+dx)*2))*3;peak=Math.max(peak,(data[i]+data[i+1]+data[i+2])/3);}return peak;};

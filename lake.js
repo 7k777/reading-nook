@@ -20,12 +20,13 @@ const secrets=[{id:'letter',uv:[.46,.76]},{id:'moon',uv:[.32,.89]},{id:'boat',uv
 let found=new Set(),discoveryPulse=0,dwell=new Map();
 try{const saved=JSON.parse(localStorage.getItem('qicheng-lake-found-v1')||'[]');if(Array.isArray(saved))found=new Set(saved.filter(id=>secrets.some(s=>s.id===id)));}catch{}
 function framing(){
- const a=width/height,b=images?images[0].width/images[0].height:.75;
- const scale=a>b?[1,b/a]:[a/b,1];
- const focus=[.5,a>1?Math.min(1-scale[1]/2,Math.max(scale[1]/2,.74)):.5];
- return {scale,focus};
+ const iw=images?images[0].width:960,ih=images?images[0].height:1280;
+ const fit=Math.min(width/iw,height/ih);
+ const size=[iw*fit,ih*fit],offset=[(width-size[0])/2,(height-size[1])/2];
+ return {size,offset};
 }
-function photoPoint(u,v){const {scale,focus}=framing();return [(u-focus[0])/scale[0]*width+width/2,(v-focus[1])/scale[1]*height+height/2];}
+function photoPoint(u,v){const {size,offset}=framing();return [offset[0]+u*size[0],offset[1]+v*size[1]];}
+function photoBounds(){const {size,offset}=framing(),r=dropRadius();return [offset[0]+r,offset[1]+r,offset[0]+size[0]-r,offset[1]+size[1]-r];}
 
 let origin=[...base],squeeze=0,pulse=0,stage="explore";
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
@@ -36,8 +37,7 @@ function dimensions(){
   canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
   const moved=[(center[0]-(base?.[0]||width*.46))/width,(center[1]-(base?.[1]||height*.76))/height];
   base=photoPoint(.46,.76);home=[...base];
-  const {scale,focus}=framing();
-  document.body.style.backgroundPosition='50% '+(scale[1]<.999?(focus[1]-.5*scale[1])/(1-scale[1])*100:50)+'%';
+  document.body.style.backgroundPosition='center';
   origin=[origin[0]/oldWidth*width,origin[1]/oldHeight*height];
   if(down&&(oldWidth!==width||oldHeight!==height)){down=null;pressTarget=0;center=[...home];velocity=[0,0];}
   if(!down){center=[base[0]+moved[0]*width,base[1]+moved[1]*height];target=[...home];}
@@ -87,7 +87,7 @@ function initialize(){
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);upload(t,image,i);return t;
   });
-  for(const name of ['cold','warm','words','screen','image','center','half','touch','velocity','pressure','open','time','rain','grade','roundness','strength','dispersion','pulse','focus','discovery'])uniforms[name]=gl.getUniformLocation(program,'u_'+name);
+  for(const name of ['cold','warm','words','screen','image','center','half','touch','velocity','pressure','open','time','rain','grade','roundness','strength','dispersion','pulse','frame','discovery'])uniforms[name]=gl.getUniformLocation(program,'u_'+name);
   ['cold','warm','words'].forEach((name,i)=>gl.uniform1i(uniforms[name],i));
   gl.uniform1f(uniforms.rain,sceneConfig.rain===false?0:1);
   gl.uniform3f(uniforms.grade,...(sceneConfig.grade||[.69,.83,.96]));
@@ -111,7 +111,7 @@ function draw(t){
   gl.uniform2f(uniforms.center,...g.center);gl.uniform2f(uniforms.half,...g.half);gl.uniform2f(uniforms.touch,...touch);
   gl.uniform2f(uniforms.velocity,...velocity);gl.uniform1f(uniforms.pressure,press);gl.uniform1f(uniforms.open,open);
   gl.uniform1f(uniforms.pulse,pulse);gl.uniform1f(uniforms.discovery,discoveryPulse);
-  gl.uniform2f(uniforms.focus,...framing().focus);
+  const {size,offset}=framing();gl.uniform4f(uniforms.frame,offset[0]/width,offset[1]/height,size[0]/width,size[1]/height);
   gl.uniform1f(uniforms.time,reduce.matches?0:t*.001);gl.drawArrays(gl.TRIANGLES,0,6);
 }
 function wake(){if(!disposed&&!document.hidden&&!raf)raf=requestAnimationFrame(frame);}
@@ -181,7 +181,8 @@ on(canvas,'pointermove',e=>{
   const dx=e.clientX-down.x,dy=e.clientY-down.y;
   moveDistance=Math.max(moveDistance,Math.hypot(dx,dy));touch=[e.clientX,e.clientY];
   if(open<.1){
-    target=[clamp(down.cx+dx,dropRadius(),width-dropRadius()),clamp(down.cy+dy,dropRadius(),height-dropRadius())];
+    const [left,top,right,bottom]=photoBounds();
+    target=[clamp(down.cx+dx,left,right),clamp(down.cy+dy,top,bottom)];
   }
   wake();
 });
@@ -219,7 +220,7 @@ function fallback(){
 }
 function drawFallback(g){
   const c=canvas.getContext('2d');if(!c)return;c.setTransform(dpr,0,0,dpr,0,0);
-  const image=(im)=>{const scale=Math.max(width/im.width,height/im.height),w=im.width*scale,h=im.height*scale;const {focus}=framing();c.drawImage(im,width/2-w*focus[0],height/2-h*focus[1],w,h);};
+  const image=(im)=>{const {size,offset}=framing();c.fillStyle='#172333';c.fillRect(0,0,width,height);c.drawImage(im,...offset,...size);};
   if(open>.99){image(images[1]);c.drawImage(wordCanvas,0,0,width,height);return;}
   image(images[0]);c.save();
   c.beginPath();
@@ -234,4 +235,4 @@ async function start(){
 }
 start();
 // Read-only QA state, no controls or debug text are displayed in the experience.
-Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect,squeeze,pulse,stage,pixelRatio:dpr,surface:[canvas.width,canvas.height],found:[...found],secrets:secrets.map(s=>({...s,screen:photoPoint(...s.uv)})),geometry:geometry()}),project:(x,y)=>({x:x/width,y:y/height})}});
+Object.defineProperty(window,'windowSpike',{value:{state:()=>({center:[...center],target:[...target],velocity:[...velocity],press,open,phase:canvas.dataset.phase||outsidePhase,renderer:canvas.dataset.renderer,radius:dropRadius(),aspect:dropAspect,squeeze,pulse,stage,frame:framing(),pixelRatio:dpr,surface:[canvas.width,canvas.height],found:[...found],secrets:secrets.map(s=>({...s,screen:photoPoint(...s.uv)})),geometry:geometry()}),project:(x,y)=>({x:x/width,y:y/height})}});
