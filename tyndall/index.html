@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#172333">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>光落进山里</title>
+<link rel="icon" href="data:,">
+<link rel="preload" href="../assets/lake/snow-reflection.jpg" as="image" crossorigin="anonymous">
+<link rel="stylesheet" href="../style.css?v=lake-small-9">
+<style>body{background:#172333 url('../assets/lake/snow-reflection.jpg') center/contain no-repeat}</style>
+</head><body><main aria-label="光落进山里"><canvas id="world" role="button" tabindex="0" aria-label="拖动水滴，看光线折进水里；双击展开，再双击收回"></canvas></main>
+<script id="scene-config" type="application/json">{"outside":"../assets/lake/snow-reflection.jpg","inside":"../assets/lake/snow-reflection.jpg","shader":"../tyndall.frag?v=1","hiddenText":true,"rain":false,"grade":[1,1,1],"roundness":1,"dropWidthFraction":0.085,"maxRadius":36,"dropAspect":1,"strength":0.95,"dispersion":0.18,"outsidePhase":"lake","insidePhase":"reflection","insideLabel":"倒影里的秘密已展开，双击收回水滴","outsideLabel":"拖动水滴探索湖里的纸条和秘密，按压形变，松手回弹；双击看清倒影"}</script>
+<script type="module" src="../lake.js?v=lake-small-9"></script>
+</body></html>
