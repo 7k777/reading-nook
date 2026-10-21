@@ -8,7 +8,7 @@ try{
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
  const page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto(base+'tyndall/');
+ await page.goto(base+'tyndall/index.html');
  if((await page.title()).includes('External Content Notice')){await page.getByRole('button',{name:'Open the page',exact:true}).click();errors.length=0;}
  await page.waitForFunction(()=>window.windowSpike?.state().renderer==='webgl');
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('canvas')).opacity==='1');
@@ -38,7 +38,7 @@ try{
  assert.equal(await page.evaluate(()=>document.querySelector('canvas').getContext('webgl').getError()),0);assert.deepEqual(errors,[]);
  await context.close();
  const retina=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,reducedMotion:'reduce'});
- const rp=await retina.newPage();await rp.goto(base+'tyndall/');
+ const rp=await retina.newPage();await rp.goto(base+'tyndall/index.html');
  if((await rp.title()).includes('External Content Notice'))await rp.getByRole('button',{name:'Open the page',exact:true}).click();
  await rp.waitForFunction(()=>window.windowSpike?.state().renderer==='webgl');assert.deepEqual(await rp.evaluate(()=>window.windowSpike.state().surface),[1170,2532]);await retina.close();
  console.log('PASS: visible light, no margin leakage, actual touch deformation/drag/rebound, double-click expansion/return, responsive layout, 3x resolution, reduced motion, no console or GL errors');
